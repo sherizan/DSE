@@ -25,9 +25,16 @@ namespace Crawler
 
 		public void Start()
 		{
-			SearchDirectory(rootDirectory);
+			if (Directory.Exists(rootDirectory))
+			{
+				SearchDirectory(rootDirectory);
 
-			Console.WriteLine("Searched " + dirsSearched + " folders and found " + filesFound + " files.");
+				Console.WriteLine("Searched " + dirsSearched + " folders and found " + filesFound + " files.");
+			}
+			else
+			{
+				Console.WriteLine("Directory does not exist!");
+			}
 		}
 
 		void SearchDirectory(string path)
@@ -54,6 +61,7 @@ namespace Crawler
 				{
 					SearchDirectory(dir);
 				}
+
 			}
 
 			if (files.Count > 0)
@@ -61,7 +69,8 @@ namespace Crawler
 				foreach (string file in files)
 				{
 					// filename is extracted (w/o path)
-					Indexer.Instance.AddFileName(path, file.Substring(file.LastIndexOf("\\") + 1));
+					Indexer.Instance.AddFileName(file);
+					Parser.Instance.ParseFile(file);
 					filesFound++;
 				}
 			}

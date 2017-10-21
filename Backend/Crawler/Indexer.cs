@@ -85,9 +85,11 @@ namespace Crawler
 
 			using (SQLiteCommand command = new SQLiteCommand(db))
 			{
-				command.CommandText = "INSERT INTO links (word_id, file_id) VALUES " +
-				"((SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
-				"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.path))";
+				command.CommandText = "INSERT INTO links (word_id, file_id) SELECT " +
+				"(SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
+				"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.path)" +
+				"WHERE EXISTS (" +
+				"SELECT words.id FROM words WHERE \"" + word + "\" = words.word)";
 				command.ExecuteNonQuery();
 			}
 		}

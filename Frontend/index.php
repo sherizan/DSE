@@ -61,42 +61,58 @@ use App\SQLiteConnection;
 <div class="container">
   <div class="row my-4">
     <div class="col">
+      
+      <h4 class="my-2">Results</h4>
 
-      <h1>Results</h1>
+      <div class="card">
+        <div class="card-body">
+          <?php
 
-      <?php
+            $new_keyword = $_GET['keyword'];
 
-          $new_keyword = $_GET['keyword'];
+            // Select word based on what user searches
+            $sql = "SELECT id, word FROM words WHERE word = '$new_keyword' ";
 
-          // Select word based on what user searches
-          $sql = "SELECT id, word FROM words WHERE word = '$new_keyword' ";
+            foreach ($pdo->query($sql) as $row) {
+                $words_id = $row['id'];
+                $words_word = $row['word'];
+                // echo $words_id . "\t";
+                // echo $words_word . "\n";
+            }
 
-          foreach ($pdo->query($sql) as $row) {
-              $words_id = $row['id'];
-              $words_word = $row['word'];
-              echo $words_id . "\t";
-              echo $words_word . "\n";
-          }
+            $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
 
-          $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
+            foreach ($pdo->query($sql) as $row) {
+                $links_word_id = $row['word_id'];
+                $links_file_id = $row['file_id'];
+                // echo $links_work_id . "\t";
+                // echo $links_file_id . "\n";
+            }
 
-          foreach ($pdo->query($sql) as $row) {
-              $links_work_id = $row['word_id'];
-              $links_file_id = $row['file_id'];
-              echo $links_work_id . "\t";
-              echo $links_file_id . "\n";
-          }
+            $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
 
-          $sql = "SELECT id, path_url FROM files WHERE id = '$links_work_id' ";
+            foreach ($pdo->query($sql) as $row) {
+                $files_id = $row['id'];
+                $files_path = $row['file_path'];
+                // echo $files_id . "\t";
+                echo "<b>" . $new_keyword . "</b><br>";
+                echo $files_path . "<br>";
+            }
 
-          foreach ($pdo->query($sql) as $row) {
-              $files_id = $row['id'];
-              $files_path = $row['path_url'];
-              echo $files_id . "\t";
-              echo $files_path . "\n";
-          }
+            $sql = "SELECT word_id FROM links WHERE file_id = '$files_id' ";
 
-      ?>
+            foreach ($pdo->query($sql) as $row) {
+                $links_word_id = $row['word_id'];
+                $sql = "SELECT word FROM words WHERE id = '$links_word_id' ";
+                foreach ($pdo->query($sql) as $row) {
+                  $words_word = $row['word'];
+                  echo "<b>" . $words_word . "</b><br>";
+                }
+            }
+
+          ?>
+        </div>
+      </div>
     </div>
   </div>
 </div>

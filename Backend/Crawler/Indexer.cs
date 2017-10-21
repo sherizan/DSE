@@ -18,7 +18,7 @@ namespace Crawler
 
 		SQLiteConnection db = null;
 
-		readonly string dbFileName = "File Indices.sqlite";
+		readonly string dbFileName = "file_indices.sqlite";
 
 		List<string> words = new List<string>();
 
@@ -46,7 +46,7 @@ namespace Crawler
 				{
 					// table doesn't exist, create new table
 					command.CommandText =
-						"CREATE TABLE files (id TEXT UNIQUE, path TEXT UNIQUE);\n" +
+						"CREATE TABLE files (id TEXT UNIQUE, file_path TEXT UNIQUE);\n" +
 						"CREATE TABLE words (id TEXT UNIQUE, word TEXT UNIQUE);\n" +
 						"CREATE TABLE links (word_id TEXT, file_id TEXT);";
 					command.ExecuteNonQuery();
@@ -62,7 +62,7 @@ namespace Crawler
 
 			using (SQLiteCommand command = new SQLiteCommand(db))
 			{
-				command.CommandText = "INSERT OR REPLACE INTO files (id, path) VALUES (HEX(RANDOMBLOB(16)), \"" + path + "\")";
+				command.CommandText = "INSERT OR REPLACE INTO files (id, file_path) VALUES (HEX(RANDOMBLOB(16)), \"" + path + "\")";
 				command.ExecuteNonQuery();
 			}
 		}
@@ -87,7 +87,7 @@ namespace Crawler
 			{
 				command.CommandText = "INSERT INTO links (word_id, file_id) SELECT " +
 				"(SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
-				"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.path)" +
+				"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.file_path)" +
 				"WHERE EXISTS (" +
 				"SELECT words.id FROM words WHERE \"" + word + "\" = words.word)";
 				command.ExecuteNonQuery();
@@ -135,14 +135,14 @@ namespace Crawler
 			using (SQLiteCommand command = new SQLiteCommand(db))
 			{
 				command.CommandText =
-				"SELECT words.word AS word, files.path AS path\n" +
+				"SELECT words.word AS word, files.file_path AS file_path\n" +
 				"FROM ((links\n" +
 				"INNER JOIN words ON links.word_id = words.id)\n" +
 				"INNER JOIN files ON links.file_id = files.id)\n" +
 				"ORDER By words.word DESC";
 				using (SQLiteDataReader reader = command.ExecuteReader())
 				{
-					while (reader.Read()) links.Add(new Tuple<string, string>(reader["word"].ToString(), reader["path"].ToString()));
+					while (reader.Read()) links.Add(new Tuple<string, string>(reader["word"].ToString(), reader["file_path"].ToString()));
 				}
 			}
 

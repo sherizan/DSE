@@ -22,7 +22,12 @@ namespace Crawler
 
 		public void ParseFile(string path)
 		{
-			Console.Write("\tParsing " + path.Substring(path.LastIndexOf("\\")) + "... ");
+			int oldCursorY, newCursorY;
+			lock (Console.Out)
+			{
+				Console.WriteLine("\tParsing " + path.Substring(path.LastIndexOf("\\")) + "... ");
+				oldCursorY = Console.CursorTop - 1;
+			}
 			string allText;
 			string[] split = { };
 			List<string> cleaned = new List<string>();
@@ -31,15 +36,16 @@ namespace Crawler
 			{
 				allText = File.ReadAllText(path);
 				split = allText.Split(whitespaceCharacters, StringSplitOptions.RemoveEmptyEntries);
-				
+
 				foreach (string s in split)
 				{
 					string[] split2 = rgx.Replace(s, " ").Split(whitespaceCharacters, StringSplitOptions.RemoveEmptyEntries);
 					foreach (string s2 in split2) if (s2 != null || s2 != "") cleaned.Add(s2);
 				}
 			}
-			catch
+			catch (Exception e)
 			{
+				Console.WriteLine(e.Message);
 			}
 
 			foreach (string s in cleaned)
@@ -49,7 +55,15 @@ namespace Crawler
 				Indexer.Instance.AddWordLink(lower, path);
 			}
 
-			Console.Write("Done!\n");
+			lock (Console.Out)
+			{
+				newCursorY = Console.CursorTop;
+				Console.CursorLeft = 100; Console.CursorTop = oldCursorY;
+				Console.SetCursorPosition(100, oldCursorY);
+				Console.Write("Done!");
+				Console.CursorLeft = 0; Console.CursorTop = newCursorY;
+				Console.SetCursorPosition(0, newCursorY);
+			}
 		}
 	}
 }

@@ -17,6 +17,8 @@ namespace Crawler
 		string rootDirectory = "";
 		int dirsSearched = 0, filesFound = 0;
 
+		List<Task> tasks = new List<Task>();
+
 		public void SetRootDirectory(string directory)
 		{
 			rootDirectory = directory;
@@ -35,6 +37,8 @@ namespace Crawler
 			{
 				Console.WriteLine("Directory does not exist!");
 			}
+
+			Task.WaitAll(tasks.ToArray());
 		}
 
 		void SearchDirectory(string path)
@@ -70,7 +74,7 @@ namespace Crawler
 				{
 					// filename is extracted (w/o path)
 					Indexer.Instance.AddFileName(file);
-					Parser.Instance.ParseFile(file);
+					tasks.Add(Task.Run(() => Parser.Instance.ParseFile(file)));
 					filesFound++;
 				}
 			}

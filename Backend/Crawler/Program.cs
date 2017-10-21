@@ -20,11 +20,18 @@ namespace Crawler
 				directory = Console.ReadLine();
 			}
 
+			Console.CursorVisible = false;
+			DateTime start = DateTime.Now;
+
 			Indexer.Instance.Init();
 			Crawler.Instance.SetRootDirectory(directory);
 			Crawler.Instance.Start();
+			Indexer.Instance.WaitToEnd();
 
-			Console.ReadLine();
+			Console.WriteLine("Total time taken: " + (DateTime.Now - start).TotalMilliseconds + "ms");
+
+			Console.CursorVisible = true;
+			Console.Read();
 		}
 	}
 }

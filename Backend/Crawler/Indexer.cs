@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
+using System.Threading;
 using System.Data.SQLite;
 using System.Data.SQLite.Linq;
 using System.IO;
@@ -17,10 +17,17 @@ namespace Crawler
 		public static Indexer Instance { get { return _instance; } }
 
 		SQLiteConnection db = null;
-
 		readonly string dbFileName = "file_indices.sqlite";
 
+		Thread dbThread;
+		enum ThreadStatus { IDLE, RUNNING };
+		ThreadStatus threadStatus = ThreadStatus.IDLE;
+
+		Queue<string> commandQueue = new Queue<string>();
 		List<string> words = new List<string>();
+		List<Tuple<string,string>> links = new List<Tuple<string, string>>();
+
+		int totalCommands = 0;
 
 		public void Init()
 		{
@@ -29,7 +36,7 @@ namespace Crawler
 			// create new .sqlite file
 			if (!doesDBExists) SQLiteConnection.CreateFile(dbFileName);
 
-			db = new SQLiteConnection("Data Source=" + dbFileName + "; Version=3");
+			db = new SQLiteConnection("Data Source=" + dbFileName + "; Version=3; Cache Size=8192; Synchronous=Off; Journal Mode=Memory");
 			db.Open();
 			using (SQLiteCommand command = new SQLiteCommand(db))
 			{
@@ -53,45 +60,113 @@ namespace Crawler
 				}
 			}
 
-			words = GetAllWords();
+			//words = GetAllWords();
+			//links = GetAllWordLinks();
+
+			dbThread = new Thread(Update);
+			dbThread.Start();
+
+			System.Threading.Tasks.Task.Run(() =>
+			{
+				int oldCursorY, newCursorY;
+
+				lock (Console.Out)
+				{
+					Console.WriteLine("Commands left = 0"); // x = 15
+					oldCursorY = Console.CursorTop - 1;
+				}
+
+				DateTime start = DateTime.Now;
+				while (dbThread.IsAlive)
+				{
+					lock (Console.Out)
+					{
+						newCursorY = Console.CursorTop;
+						Console.SetCursorPosition(15, oldCursorY);
+						Console.Out.Write(commandQueue.Count + "\t\t");
+						Console.SetCursorPosition(0, newCursorY);
+					}
+				}
+			});
+		}
+
+		void Update()
+		{
+			DateTime start = DateTime.Now;
+
+			do
+			{
+				if (commandQueue.Count > 10 || (DateTime.Now - start).TotalMilliseconds > 100)
+				{
+					if (commandQueue.Count > 0)
+					{
+						threadStatus = ThreadStatus.RUNNING;
+						using (SQLiteCommand command = new SQLiteCommand(db))
+						{
+							using (SQLiteTransaction transaction = db.BeginTransaction())
+							{
+								try
+								{
+									for (int i = 0, c = commandQueue.Count; i < c; ++i)
+									{
+										lock (commandQueue) command.CommandText = commandQueue.Dequeue() + ";\n"; // must have semicolon
+										command.ExecuteNonQuery();
+									}
+								}
+								catch (Exception e)
+								{
+									lock (Console.Out) Console.WriteLine(e.Message);
+								}
+
+								transaction.Commit();
+							}
+						}
+						threadStatus = ThreadStatus.IDLE;
+						GC.Collect();
+					}
+
+					start = DateTime.Now;
+				}
+			}
+			while (true);
+		}
+
+		void QueueCommand(string command)
+		{
+			lock (commandQueue) commandQueue.Enqueue(command);
+		}
+
+		public void WaitToEnd()
+		{
+			while (commandQueue.Count > 0 || threadStatus == ThreadStatus.RUNNING) { }
+			dbThread.Abort();
+			Console.WriteLine(totalCommands + " commands executed");
 		}
 
 		public void AddFileName(string path)
 		{
 			if (path == "") return;
-
-			using (SQLiteCommand command = new SQLiteCommand(db))
-			{
-				command.CommandText = "INSERT OR REPLACE INTO files (id, file_path) VALUES (HEX(RANDOMBLOB(16)), \"" + path + "\")";
-				command.ExecuteNonQuery();
-			}
+			QueueCommand("INSERT OR REPLACE INTO files (id, file_path) VALUES (HEX(RANDOMBLOB(16)), \"" + path + "\")");
+			totalCommands++;
 		}
 
 		public void AddWordEntry(string word)
 		{
 			if (word == "") return;
-
-			using (SQLiteCommand command = new SQLiteCommand(db))
-			{
-				command.CommandText = "INSERT OR REPLACE INTO words (id, word) VALUES (HEX(RANDOMBLOB(16)), \"" + word + "\")";
-				command.ExecuteNonQuery();
-			}
+			QueueCommand("INSERT OR REPLACE INTO words (id, word) VALUES (HEX(RANDOMBLOB(16)), \"" + word + "\")");
+			totalCommands++;
 		}
 
 		public void AddWordLink(string word, string fullPath)
 		{
 			if (word == null || fullPath == null ||
 				word == "" || fullPath == "") return;
-
-			using (SQLiteCommand command = new SQLiteCommand(db))
-			{
-				command.CommandText = "INSERT INTO links (word_id, file_id) SELECT " +
-				"(SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
-				"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.file_path)" +
-				"WHERE EXISTS (" +
-				"SELECT words.id FROM words WHERE \"" + word + "\" = words.word)";
-				command.ExecuteNonQuery();
-			}
+			QueueCommand("INSERT OR REPLACE INTO links (word_id, file_id) SELECT " +
+			"(SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
+			"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.file_path)" +
+			"WHERE EXISTS (" +
+			"SELECT words.id FROM words WHERE \"" + word + "\" = words.word)");
+			totalCommands++;
 		}
 
 		public List<string> GetAllFileNames()

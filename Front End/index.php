@@ -1,3 +1,11 @@
+<?php
+
+require 'vendor/autoload.php';
+
+use App\SQLiteConnection;
+
+?>
+
 <!DOCTYPE html>
 <html>
 <head>
@@ -21,34 +29,46 @@
       <li class="nav-item active">
         <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
       </li>
-      <li class="nav-item">
-        <a class="nav-link" href="#">Link</a>
-      </li>
     </ul>
   </div>
 </nav>
 
 <div class="container">
+  <div class="row my-4">
+    <div class="col">
+      <?php
+
+        // Connect to SQLite
+        $pdo = (new SQLiteConnection())->connect();
+        if ($pdo != null) {
+            echo '<div class="alert alert-success" role="alert">Connected to the SQLite database successfully!<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>';
+        } else {
+          echo '<div class="alert alert-danger" role="alert">Whoops, could not connect to the SQLite database!</div>';
+        }
+      ?>
+    </div>
+  </div>
   <div class="row p-3 my-4 mx-auto justify-content-md-center align-items-center">
     <div class="col-4 align-self-center">
       <form class="form-inline my-2 my-lg-0">
       <input class="form-control mr-sm-2" type="text" placeholder="Search something" aria-label="Search">
-      <button type="button" class="btn btn-outline-success my-2 my-sm-0" data-toggle="modal" data-target=".bd-example-modal-sm">Go</button>
+      <button type="button" class="btn btn-outline-success my-2 my-sm-0">Go</button>
     </form>
     </div>
   </div>
 </div>
 
-<!-- Small modal -->
-<div class="modal fade bd-example-modal-sm" tabindex="-1" role="dialog" aria-labelledby="mySmallModalLabel" aria-hidden="true">
-  <div class="modal-dialog modal-sm">
-    <div class="modal-content">
-      <div class="modal-body">
-        <h3>Please wait.</h3>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
-      </div>
+<div class="container">
+  <div class="row my-4">
+    <div class="col">
+      <?php
+
+        // Select word based on what user searches
+        $sql = 'SELECT word FROM words WHERE ';
+        foreach ($pdo->query($sql) as $row) {
+            print $row['word'] . "\n";
+        }
+      ?>
     </div>
   </div>
 </div>

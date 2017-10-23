@@ -53,8 +53,8 @@ namespace Crawler
 				{
 					// table doesn't exist, create new table
 					command.CommandText =
-						"CREATE TABLE files (id TEXT UNIQUE, file_path TEXT UNIQUE);\n" +
-						"CREATE TABLE words (id TEXT UNIQUE, word TEXT UNIQUE);\n" +
+						"CREATE TABLE files (id TEXT UNIQUE, file_path TEXT UNIQUE PRIMARY KEY);\n" +
+						"CREATE TABLE words (id TEXT UNIQUE, word TEXT UNIQUE PRIMARY KEY);\n" +
 						"CREATE TABLE links (word_id TEXT, file_id TEXT);";
 					command.ExecuteNonQuery();
 				}
@@ -146,14 +146,14 @@ namespace Crawler
 		public void AddFileName(string path)
 		{
 			if (path == "") return;
-			QueueCommand("INSERT OR REPLACE INTO files (id, file_path) VALUES (HEX(RANDOMBLOB(16)), \"" + path + "\")");
+			QueueCommand("INSERT OR IGNORE INTO files (id, file_path) VALUES (HEX(RANDOMBLOB(16)), \"" + path + "\")");
 			totalCommands++;
 		}
 
 		public void AddWordEntry(string word)
 		{
 			if (word == "") return;
-			QueueCommand("INSERT OR REPLACE INTO words (id, word) VALUES (HEX(RANDOMBLOB(16)), \"" + word + "\")");
+			QueueCommand("INSERT OR IGNORE INTO words (id, word) VALUES (HEX(RANDOMBLOB(16)), \"" + word + "\")");
 			totalCommands++;
 		}
 
@@ -161,7 +161,7 @@ namespace Crawler
 		{
 			if (word == null || fullPath == null ||
 				word == "" || fullPath == "") return;
-			QueueCommand("INSERT OR REPLACE INTO links (word_id, file_id) SELECT " +
+			QueueCommand("INSERT INTO links (word_id, file_id) SELECT " +
 			"(SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
 			"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.file_path)" +
 			"WHERE EXISTS (" +

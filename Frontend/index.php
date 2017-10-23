@@ -51,7 +51,7 @@ use App\SQLiteConnection;
   <div class="row p-3 my-4 mx-auto justify-content-md-center align-items-center">
     <div class="col-4 align-self-center">
       <form class="form-inline my-2 my-lg-0" action="index.php">
-        <input class="form-control mr-sm-2" type="text" placeholder="Search something" name="keyword">
+        <input class="form-control mr-sm-2" type="text" placeholder="Search something" name="keyword" required="true">
         <input type="submit" class="btn btn-outline-success my-2 my-sm-0" value="Go"/>
       </form>
     </div>
@@ -68,47 +68,60 @@ use App\SQLiteConnection;
         <div class="card-body">
           <?php
 
+          if(isset($_GET['keyword']))
+          {
             $new_keyword = $_GET['keyword'];
 
-            // Select word based on what user searches
-            $sql = "SELECT id, word FROM words WHERE word = '$new_keyword' ";
 
-            foreach ($pdo->query($sql) as $row) {
-                $words_id = $row['id'];
-                $words_word = $row['word'];
-                // echo $words_id . "\t";
-                // echo $words_word . "\n";
-            }
+              if($new_keyword != null)
+              {
+              // Select word based on what user searches
+              $sql = "SELECT id, word FROM words WHERE word like '%$new_keyword%' ";
 
-            $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
-
-            foreach ($pdo->query($sql) as $row) {
-                $links_word_id = $row['word_id'];
-                $links_file_id = $row['file_id'];
-                // echo $links_work_id . "\t";
-                // echo $links_file_id . "\n";
-            }
-
-            $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
-
-            foreach ($pdo->query($sql) as $row) {
-                $files_id = $row['id'];
-                $files_path = $row['file_path'];
-                // echo $files_id . "\t";
-                echo "<b>" . $new_keyword . "</b><br>";
-                echo $files_path . "<br>";
-            }
-
-            $sql = "SELECT word_id FROM links WHERE file_id = '$files_id' ";
-
-            foreach ($pdo->query($sql) as $row) {
-                $links_word_id = $row['word_id'];
-                $sql = "SELECT word FROM words WHERE id = '$links_word_id' ";
-                foreach ($pdo->query($sql) as $row) {
+              foreach ($pdo->query($sql) as $row) {
+                  $words_id = $row['id'];
                   $words_word = $row['word'];
-                  echo "<b>" . $words_word . "</b><br>";
-                }
+                  // echo $words_id . "\t";
+                  // echo $words_word . "\n";
+              }
+
+              $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' "; 
+
+              foreach ($pdo->query($sql) as $row) {
+                  $links_word_id = $row['word_id'];
+                  $links_file_id = $row['file_id'];
+                  // echo $links_work_id . "\t";
+                  // echo $links_file_id . "\n";
+              }
+
+              $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
+
+              foreach ($pdo->query($sql) as $row) {
+                  $files_id = $row['id'];
+                  $files_path = $row['file_path'];
+                  // echo $files_id . "\t";
+                  echo "<b>" . $new_keyword . "</b><br>";
+                  echo $files_path . "<br>";
+              }
+
+              $sql = "SELECT word_id FROM links WHERE file_id = '$files_id' ";
+
+              foreach ($pdo->query($sql) as $row) {
+                  $links_word_id = $row['word_id'];
+                  $sql = "SELECT word FROM words WHERE id like '$links_word_id' ";
+                  foreach ($pdo->query($sql) as $row) {
+                    $words_word = $row['word'];
+                    echo "<b>" . $words_word . "</b><br>";
+                  }
+              }
             }
+          }
+          else
+          {
+            echo "<center><h1>Search Something</h1></center>";
+          }
+
+           
 
           ?>
         </div>

@@ -62,8 +62,6 @@ use App\SQLiteConnection;
   <div class="row my-4">
     <div class="col">
       
-      <h4 class="my-2">Results</h4>
-
       <div class="card">
         <div class="card-body">
           <?php
@@ -81,7 +79,7 @@ use App\SQLiteConnection;
               foreach ($pdo->query($sql) as $row) {
                   $words_id = $row['id'];
                   $words_word = $row['word'];
-                  // echo $words_id . "\t";
+                  // echo $count_word . "\t";
                   // echo $words_word . "\n";
               }
 
@@ -94,26 +92,27 @@ use App\SQLiteConnection;
                   // echo $links_file_id . "\n";
               }
 
-              $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
+              // This is to find the correct file and show contens of file
+
+              $sql = "SELECT id, file_path, COUNT(id) as file_count FROM files WHERE id = '$links_file_id' ";
 
               foreach ($pdo->query($sql) as $row) {
                   $files_id = $row['id'];
                   $files_path = $row['file_path'];
+                  $files_count = $row['file_count'];
                   // echo $files_id . "\t";
-                  echo "<b>" . $new_keyword . "</b><br>";
-                  echo $files_path . "<br>";
-              }
-
-              $sql = "SELECT word_id FROM links WHERE file_id = '$files_id' ";
-
-              foreach ($pdo->query($sql) as $row) {
-                  $links_word_id = $row['word_id'];
-                  $sql = "SELECT word FROM words WHERE id like '$links_word_id' ";
-                  foreach ($pdo->query($sql) as $row) {
-                    $words_word = $row['word'];
-                    echo "<b>" . $words_word . "</b><br>";
+                  echo "<p>Found " . $files_count . " results</p>";
+                  echo "<p><b>" . $new_keyword . "</b></p>";
+                  echo "<p>File path:</p>";
+                  echo "<p>" . $files_path . "</p>";
+                  if(file_exists('text files/Indexer.cs')){
+                    echo '<p>Content:</p>';
+                    echo '<pre>';
+                    echo file_get_contents('text files/Indexer.cs');
+                    echo '</pre>';
                   }
               }
+
             }
           }
           else

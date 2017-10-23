@@ -11,6 +11,7 @@ use App\SQLiteConnection;
 <head>
   <title>Distributed Search Engine</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta/css/bootstrap.min.css" integrity="sha384-/Y6pD6FV/Vv2HJnA6t+vslU6fwYXjCFtcEpHbNJ0lyAFsXTsjBbfaDjzALeQsN6M" crossorigin="anonymous">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.7.0/css/font-awesome.min.css">
 </head>
 <body>
 <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
@@ -24,10 +25,27 @@ use App\SQLiteConnection;
     <span class="navbar-toggler-icon"></span>
   </button>
 
+  <?php
+
+    // Connect to SQLite
+    $pdo = (new SQLiteConnection())->connect();
+        
+        
+
+  ?>
+
   <div class="collapse navbar-collapse" id="navbarSupportedContent">
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
-        <a class="nav-link" href="#">Home <span class="sr-only">(current)</span></a>
+        <?php
+        
+        if ($pdo != null) {
+            echo '<a class="nav-link" href="#" style="color:green"><i class="fa fa-check-circle-o"></i> Connected <span class="sr-only">(current)</span></a>';
+        } else {
+          echo '<a class="nav-link" href="#">dot failed <span class="sr-only">(current)</span></a>';
+        }
+        ?>
+        
       </li>
     </ul>
   </div>
@@ -36,24 +54,37 @@ use App\SQLiteConnection;
 <div class="container">
   <div class="row my-4">
     <div class="col">
-      <?php
 
-        // Connect to SQLite
-        $pdo = (new SQLiteConnection())->connect();
-        if ($pdo != null) {
-            echo '<div class="alert alert-success" role="alert">Connected to the SQLite database successfully!<button type="button" class="close" data-dismiss="alert" aria-label="Close"><span aria-hidden="true">&times;</span></button></div>';
-        } else {
-          echo '<div class="alert alert-danger" role="alert">Whoops, could not connect to the SQLite database!</div>';
-        }
-      ?>
     </div>
   </div>
   <div class="row p-3 my-4 mx-auto justify-content-md-center align-items-center">
-    <div class="col-4 align-self-center">
-      <form class="form-inline my-2 my-lg-0" action="index.php">
-        <input class="form-control mr-sm-2" type="text" placeholder="Search something" name="keyword" required="true">
-        <input type="submit" class="btn btn-outline-success my-2 my-sm-0" value="Go"/>
+    <div class="col-md-4 col-xs-12 align-self-center">
+      <form class="form-inline my-2 my-lg-0" action="index.php" id="needs-validation" novalidate>
+        <div class="input-group">
+          <label for="validationCustom01"></label>
+          <input class="form-control form-control-lg" minlength="2" type="text" placeholder="Search something" id="validationCustom01" name="keyword" required>
+          <span class="input-group-btn">
+            <button class="btn btn-outline-success btn-lg" type="submit"><i class="fa fa-search"></i> Go</button>
+          </span>
+        </div>
       </form>
+      <script>
+      (function() {
+        'use strict';
+
+        window.addEventListener('load', function() {
+          var form = document.getElementById('needs-validation');
+          form.addEventListener('submit', function(event) {
+            if (form.checkValidity() === false) {
+              event.preventDefault();
+              event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+          }, false);
+        }, false);
+      })();
+      </script>
+
     </div>
   </div>
 
@@ -63,8 +94,6 @@ use App\SQLiteConnection;
   <div class="row my-4">
     <div class="col">
       
-      <h4 class="my-2">Results</h4>
-
       <div class="card">
         <div class="card-body">
         	
@@ -83,10 +112,11 @@ use App\SQLiteConnection;
               foreach ($pdo->query($sql) as $row) {
                   $words_id = $row['id'];
                   $words_word = $row['word'];
-                  // echo $words_id . "\t";
+                  // echo $count_word . "\t";
                   // echo $words_word . "\n";
               }
 
+<<<<<<< HEAD
             if((isset($words_id) and isset($words_word)))
               {
               	if(($words_id != null or  $words_word != null) )
@@ -130,6 +160,38 @@ use App\SQLiteConnection;
           		{
           			echo "<div><center><h1>Please Search Again, No Such File/Word</h1></center></div>";
           		}
+=======
+              $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' "; 
+
+              foreach ($pdo->query($sql) as $row) {
+                  $links_word_id = $row['word_id'];
+                  $links_file_id = $row['file_id'];
+                  // echo $links_work_id . "\t";
+                  // echo $links_file_id . "\n";
+              }
+
+              // This is to find the correct file and show contens of file
+
+              $sql = "SELECT id, file_path, COUNT(id) as file_count FROM files WHERE id = '$links_file_id' ";
+
+              foreach ($pdo->query($sql) as $row) {
+                  $files_id = $row['id'];
+                  $files_path = $row['file_path'];
+                  $files_count = $row['file_count'];
+                  // echo $files_id . "\t";
+                  echo "<p>Found " . $files_count . " results</p>";
+                  echo "<p><b>" . $new_keyword . "</b></p>";
+                  echo "<p>File path:</p>";
+                  echo "<p>" . $files_path . "</p>";
+                  if(file_exists('text files/Indexer.cs')){
+                    echo '<p>Content:</p>';
+                    echo '<pre>';
+                    echo file_get_contents('text files/Indexer.cs');
+                    echo '</pre>';
+                  }
+              }
+
+>>>>>>> 90a522b895820729709f8afb07c13b2c672cb4dc
             }
           }
           else

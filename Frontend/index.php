@@ -56,6 +56,7 @@ use App\SQLiteConnection;
       </form>
     </div>
   </div>
+
 </div>
 
 <div class="container">
@@ -66,6 +67,7 @@ use App\SQLiteConnection;
 
       <div class="card">
         <div class="card-body">
+        	
           <?php
 
           if(isset($_GET['keyword']))
@@ -85,40 +87,54 @@ use App\SQLiteConnection;
                   // echo $words_word . "\n";
               }
 
-              $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' "; 
+            if((isset($words_id) and isset($words_word)))
+              {
+              	if(($words_id != null or  $words_word != null) )
+              	{
+	              $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' "; 
 
-              foreach ($pdo->query($sql) as $row) {
-                  $links_word_id = $row['word_id'];
-                  $links_file_id = $row['file_id'];
-                  // echo $links_work_id . "\t";
-                  // echo $links_file_id . "\n";
-              }
+	              foreach ($pdo->query($sql) as $row) {
+	                  $links_word_id = $row['word_id'];
+	                  $links_file_id = $row['file_id'];
+	                  // echo $links_work_id . "\t";
+	                  // echo $links_file_id . "\n";
+	              }
+	  
+		              $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
 
-              $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
+		              foreach ($pdo->query($sql) as $row) {
+		                  $files_id = $row['id'];
+		                  $files_path = $row['file_path'];
+		                  // echo $files_id . "\t";
+		                  echo "<b>" . $new_keyword . "</b><br>";
+		                  echo $files_path . "<br>";
+		              }
 
-              foreach ($pdo->query($sql) as $row) {
-                  $files_id = $row['id'];
-                  $files_path = $row['file_path'];
-                  // echo $files_id . "\t";
-                  echo "<b>" . $new_keyword . "</b><br>";
-                  echo $files_path . "<br>";
-              }
+		              $sql = "SELECT word_id FROM links WHERE file_id = '$files_id' ";
 
-              $sql = "SELECT word_id FROM links WHERE file_id = '$files_id' ";
-
-              foreach ($pdo->query($sql) as $row) {
-                  $links_word_id = $row['word_id'];
-                  $sql = "SELECT word FROM words WHERE id like '$links_word_id' ";
-                  foreach ($pdo->query($sql) as $row) {
-                    $words_word = $row['word'];
-                    echo "<b>" . $words_word . "</b><br>";
-                  }
-              }
+		              foreach ($pdo->query($sql) as $row) {
+		                  $links_word_id = $row['word_id'];
+		                  $sql = "SELECT word FROM words WHERE id like '$links_word_id' ";
+		                  foreach ($pdo->query($sql) as $row) {
+		                    $words_word = $row['word'];
+		                    echo "<b>" . $words_word . "</b><br>";
+		                  }
+		              }
+		          }
+		          else
+		          {
+		          	echo "<div><center><h1>Please Search Again, No Such File/Word</h1></center></div>";
+		          }
+          		}
+          		else
+          		{
+          			echo "<div><center><h1>Please Search Again, No Such File/Word</h1></center></div>";
+          		}
             }
           }
           else
           {
-            echo "<center><h1>Search Something</h1></center>";
+            echo "<div><center><h1>Search Something</h1></center></div>";
           }
 
            

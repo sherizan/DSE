@@ -29,15 +29,28 @@ use App\SQLiteConnection;
     <ul class="navbar-nav mr-auto">
       <li class="nav-item active">
         <?php
-        
-        // Connect to SQLite
-        $pdo = (new SQLiteConnection())->connect();
 
-        if ($pdo != null) {
+          $db_fail = 0;
+          $show_error = '';
+
+          try {
+
+            // Connect to SQLite
+            $pdo = (new SQLiteConnection())->connect();
+
             echo '<a class="nav-link" href="#" style="color:green"><i class="fa fa-check-circle-o"></i> Connected <span class="sr-only">(current)</span></a>';
-        } else {
-          echo '<a class="nav-link" href="#">dot failed <span class="sr-only">(current)</span></a>';
-        }
+
+            $db_fail = 1;
+
+          } catch (PDOException $e) {
+
+            $show_error = $e->getMessage();
+
+            echo '<a class="nav-link" href="#" style="color:red"><i class="fa fa-close"></i> Connection failed</a>';
+            $db_fail = 0;
+
+          }
+
         ?>
         
       </li>
@@ -93,11 +106,14 @@ use App\SQLiteConnection;
         	
           <?php
 
-          if (isset($_GET['keyword'])) {
-            
-            $new_keyword = $_GET['keyword'];
+          if ($db_fail != 0) {
 
-            if ($new_keyword != null) {
+            if (isset($_GET['keyword'])) {
+              
+              $new_keyword = $_GET['keyword'];
+
+              // If user search more than 1 word 
+              list($one, $two) = explode(" ", $new_keyword, 2);
 
               // Select word based on what user searches
               $sql = "SELECT id, word FROM words WHERE word like '%$new_keyword%' ";
@@ -105,68 +121,76 @@ use App\SQLiteConnection;
               $rows = $pdo->query($sql);
               $results = $rows->fetchAll();
 
-              foreach ($results as $row) {
+              if(empty($results)) {
 
-                $words_id = $row['id'];
-                $words_word = $row['word'];
+                echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
 
-              }
+              } else {
 
-              $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
+                foreach ($results as $row) {
 
-              $rows = $pdo->query($sql);
-              $results = $rows->fetchAll();
+                  $words_id = $row['id'];
+                  $words_word = $row['word'];
 
-              echo "<h3>Found results for <b><i>" . $new_keyword . "</i></b>.</h3>";
-              echo "<hr>";
+                }
 
-              foreach ($results as $row) {
-
-                $links_file_id = $row['file_id'];
-
-                $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
+                $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
 
                 $rows = $pdo->query($sql);
                 $results = $rows->fetchAll();
 
-                foreach ($results as $row) :
+                echo "<h3>Found results for <b><i>" . $new_keyword . "</i></b>.</h3>";
+                echo "<hr>";
 
-                  $files_id = $row['id'];
-                  $files_path = $row['file_path'];
+                foreach ($results as $row) {
 
-                ?>
+                  $links_file_id = $row['file_id'];
 
-                <div class="card my-4">
-                  <div class="card-body">
-                    
-                    <?php if (file_exists($files_path)) : ?>
+                  $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
 
-                      <p><span class="badge badge-light">Content</span></p>
+                  $rows = $pdo->query($sql);
+                  $results = $rows->fetchAll();
+
+                  foreach ($results as $row) :
+
+                    $files_id = $row['id'];
+                    $files_path = $row['file_path'];
+
+                  ?>
+
+                  <div class="card my-4">
+                    <div class="card-body">
                       
-                      <?php 
-                        echo "<pre>";
-                        echo file_get_contents($files_path); 
-                        echo "</pre>";
-                      ?>
+                      <?php if (file_exists($files_path)) : ?>
 
-                    <p><a href="<?php echo $files_path; ?>" target="_blank">View file</a></p>
+                        <p><span class="badge badge-light">Content</span></p>
+                        
+                        <?php 
+                          echo "<pre>";
+                          echo file_get_contents($files_path); 
+                          echo "</pre>";
+                        ?>
 
-                    <?php endif; ?>
+                      <p><a href="<?php echo $files_path; ?>" target="_blank">View '<?php echo $files_path; ?>'</a></p>
+
+                      <?php endif; ?>
+                    </div>
                   </div>
-                </div>
-                  
-                <?php endforeach;
+                    
+                  <?php endforeach;
+
+                }
 
               }
 
-        	  }
-            else {
-        			echo "<div><center><h1>Please Search Again, No Such File/Word</h1></center></div>";
-        		}
+            }
+
+          } else {
+
+            echo "Please check your database connection.";
+
           }
-          else {
-            echo "<div><center><h1>Search Something</h1></center></div>";
-          }
+
         ?>
         </div>
       </div>

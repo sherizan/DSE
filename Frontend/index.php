@@ -114,11 +114,12 @@ use App\SQLiteConnection;
               
               $new_keyword = strtolower($_GET['keyword']);
 
-              // Separates all words into one into array 
-              // $all_keyword = explode(" ", $new_keyword);
+              $pieces = explode(" ", $new_keyword);
+			 $newarray = implode("','", $pieces); 
 
-              // Select word based on what user searches
-              $sql = "SELECT id, word FROM words WHERE word = '$new_keyword'";
+          	
+              $sql = "SELECT id, word FROM words WHERE word in ('$newarray')";
+
 
               $rows = $pdo->query($sql);
               $results = $rows->fetchAll();

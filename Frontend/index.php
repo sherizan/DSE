@@ -112,11 +112,9 @@ use App\SQLiteConnection;
               
               $new_keyword = $_GET['keyword'];
 
-              // If user search more than 1 word 
-              list($one, $two) = explode(" ", $new_keyword, 2);
-
+              
               // Select word based on what user searches
-              $sql = "SELECT id, word FROM words WHERE word like '%$new_keyword%' ";
+              $sql = "SELECT id, word FROM words WHERE word IN ('$new_keyword')";
 
               $rows = $pdo->query($sql);
               $results = $rows->fetchAll();

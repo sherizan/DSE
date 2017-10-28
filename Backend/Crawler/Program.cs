@@ -17,7 +17,7 @@ namespace Crawler
 			else
 			{
 				Console.Write("Enter a directory to search: ");
-				directory = Console.ReadLine();
+				while (directory == "") directory = Console.ReadLine();
 			}
 
 			Console.CursorVisible = false;

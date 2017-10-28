@@ -40,7 +40,7 @@ namespace Crawler
 				foreach (string s in split)
 				{
 					string[] split2 = rgx.Replace(s, " ").Split(whitespaceCharacters, StringSplitOptions.RemoveEmptyEntries);
-					foreach (string s2 in split2) if (s2 != null || s2 != "") cleaned.Add(s2);
+					foreach (string s2 in split2) if (s2 != null || s2 != "") cleaned.Add(s2.ToLower());
 				}
 			}
 			catch (Exception e)
@@ -48,11 +48,11 @@ namespace Crawler
 				Console.WriteLine(e.Message);
 			}
 
-			foreach (string s in cleaned)
+			for (int i = 0; i < cleaned.Count; ++i)
 			{
-				string lower = s.ToLower();
-				Indexer.Instance.AddWordEntry(lower);
-				Indexer.Instance.AddWordLink(lower, path);
+				string s = cleaned[i];
+				Indexer.Instance.AddWordEntry(s);
+				Indexer.Instance.AddWordLink(s, path, i < cleaned.Count - 1 ? cleaned[i + 1] : "");
 			}
 
 			lock (Console.Out)

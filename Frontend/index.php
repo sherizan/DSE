@@ -110,11 +110,13 @@ use App\SQLiteConnection;
 
             if (isset($_GET['keyword'])) {
               
-              $new_keyword = $_GET['keyword'];
+              $new_keyword = strtolower($_GET['keyword']);
 
-              
+              // Separates all words into one into array 
+              // $all_keyword = explode(" ", $new_keyword);
+
               // Select word based on what user searches
-              $sql = "SELECT id, word FROM words WHERE word IN ('$new_keyword')";
+              $sql = "SELECT id, word FROM words WHERE word = '$new_keyword'";
 
               $rows = $pdo->query($sql);
               $results = $rows->fetchAll();
@@ -161,15 +163,13 @@ use App\SQLiteConnection;
                       
                       <?php if (file_exists($files_path)) : ?>
 
-                        <p><span class="badge badge-light">Content</span></p>
+                        <p><span class="badge badge-light"><a href="<?php echo $files_path; ?>" target="_blank"><?php echo $files_path; ?></a></span></p>
                         
                         <?php 
                           echo "<pre>";
                           echo file_get_contents($files_path); 
                           echo "</pre>";
                         ?>
-
-                      <p><a href="<?php echo $files_path; ?>" target="_blank">View '<?php echo $files_path; ?>'</a></p>
 
                       <?php endif; ?>
                     </div>

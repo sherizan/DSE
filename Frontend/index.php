@@ -22,7 +22,7 @@ use App\SQLiteConnection;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.2/sweetalert2.all.min.js"></script>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="#">SIM DSE</a>
+  <a class="navbar-brand" href="/Frontend">SIM DSE</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -54,7 +54,6 @@ use App\SQLiteConnection;
           }
 
         ?>
-        
       </li>
     </ul>
   </div>
@@ -71,7 +70,7 @@ use App\SQLiteConnection;
       <form class="form-inline my-2 my-lg-0" action="index.php" id="needs-validation" novalidate>
         <div class="input-group">
           <label for="validationCustom01"></label>
-          <input class="form-control form-control-lg" minlength="2" type="text" placeholder="Search something" id="validationCustom01" name="keyword" required>
+          <input class="form-control form-control-lg" minlength="2" type="text" placeholder="Search something.." id="validationCustom01" name="keyword" required style="border-radius: 5px 0px 0px 5px;">
           <span class="input-group-btn">
             <button class="btn btn-outline-success btn-lg" type="submit"><i class="fa fa-search"></i> Go</button>
           </span>
@@ -112,23 +111,24 @@ use App\SQLiteConnection;
 
             if (isset($_GET['keyword'])) {
               
+              // Lowercase search string
               $new_keyword = strtolower($_GET['keyword']);
 
-              $pieces = explode(" ", $new_keyword);
-			 $newarray = implode("','", $pieces); 
+              // Exclude operator
+              $exclude_slash = ' \ ';
+              $pos = strpos($new_keyword, $exclude_slash);
+              $exclude = '';
+              
+              // If there is exclude operator
+              if ($pos) {
 
-          	
-              $sql = "SELECT id, word FROM words WHERE word in ('$newarray')";
+                $include = trim(strstr($new_keyword, $exclude_slash, true));
+                $exclude = trim(strrchr($new_keyword, $exclude_slash));
 
+                $sql = "SELECT id, word FROM words WHERE word = '$include'";
 
-              $rows = $pdo->query($sql);
-              $results = $rows->fetchAll();
-
-              if(empty($results)) {
-
-                echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
-
-              } else {
+                $rows = $pdo->query($sql);
+                $results = $rows->fetchAll();
 
                 foreach ($results as $row) {
 
@@ -137,12 +137,36 @@ use App\SQLiteConnection;
 
                 }
 
-                $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
+                // Find word id for excluded word
+                $sql = "SELECT id FROM words WHERE word = '$exclude'";
 
                 $rows = $pdo->query($sql);
                 $results = $rows->fetchAll();
 
-                echo "<h3>Found results for <b><i>" . $new_keyword . "</i></b>.</h3>";
+                foreach ($results as $row) {
+
+                  $exc_words_id = $row['id'];
+
+                }
+
+                // Find file id for excluded word
+                $sql = "SELECT file_id FROM links WHERE word_id = '$exc_words_id' ";
+
+                $rows = $pdo->query($sql);
+                $results = $rows->fetchAll();
+
+                foreach ($results as $row) {
+
+                  $exc_links_file_id = $row['file_id'];
+
+                }
+
+                $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' AND NOT file_id = '$exc_links_file_id' ";
+
+                $rows = $pdo->query($sql);
+                $results = $rows->fetchAll();
+
+                echo "<h3>Found results for <b><i>" . $include . "</i></b> and <span style='color:red;'>excluding</span> " . $exclude . ".</h3>";
                 echo "<hr>";
 
                 foreach ($results as $row) {
@@ -177,13 +201,99 @@ use App\SQLiteConnection;
                       <?php endif; ?>
                     </div>
                   </div>
-                    
+
                   <?php endforeach;
+
+                }
+
+              // If don't have exclude operator, back to normal search
+              } else {
+
+                // Put every word into array and add comas for DB search
+                $pieces = explode(" ", $new_keyword);
+                $newarray = implode("','", $pieces);
+
+                $sql = "SELECT id, word FROM words WHERE word in ('$newarray')";
+
+                $rows = $pdo->query($sql);
+                $results = $rows->fetchAll();
+
+                if(empty($results)) {
+
+                  echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
+
+                } else {
+
+                  foreach ($results as $row) {
+
+                    $words_id = $row['id'];
+                    $words_word = $row['word'];
+
+                  }
+
+                  $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
+
+                  $rows = $pdo->query($sql);
+                  $results = $rows->fetchAll();
+
+                  echo "<h3>Found results for <b><i>" . $new_keyword . "</i></b>.</h3>";
+                  echo "<hr>";
+
+                  foreach ($results as $row) {
+
+                    $links_file_id = $row['file_id'];
+
+                    $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
+
+                    $rows = $pdo->query($sql);
+                    $results = $rows->fetchAll();
+
+                    foreach ($results as $row) :
+
+                      $files_id = $row['id'];
+                      $files_path = $row['file_path'];
+
+                    ?>
+
+                    <div class="card my-4">
+                      <div class="card-body">
+                        
+                        <?php if (file_exists($files_path)) : ?>
+
+                          <p><span class="badge badge-light"><a href="<?php echo $files_path; ?>" target="_blank"><?php echo $files_path; ?></a></span></p>
+                          
+                          <?php 
+                            echo "<pre>";
+                            echo file_get_contents($files_path); 
+                            echo "</pre>";
+                          ?>
+
+                        <?php endif; ?>
+                      </div>
+                    </div>
+
+                    <?php endforeach;
+
+                  }
+
+                  echo "<hr><a href='/Frontend' class='btn btn-primary'><i class='fa fa-back'></i> Back to home</a>";
 
                 }
 
               }
 
+            } else {
+
+              echo "<div class='alert alert-warning'>";
+              echo "<h3>Search Features</h3>";
+              echo "<ul class=''>";
+              echo "<li>Single or multiple word search</li>";
+              echo "<li>Search exact words with &ldquo;lazy dog&rdquo;</li>";
+              echo "<li>Exclude a word with &#92; charlie</li>";
+              echo "<li>Simply combine them like &ldquo;lazy dog&rdquo; &#92; charlie</li>";
+              echo "</ul>";
+              echo "</div>";
+            
             }
 
           } else {

@@ -62,12 +62,13 @@ namespace Crawler
 			Console.CursorVisible = false;
 			DateTime start = DateTime.Now;
 
-			if (Crawler.Instance.Search(directories))
+			if (Crawler.DoesAllDirectoriesExist(directories))
 			{
+				Crawler.Instance.Init(directories);
 				Indexer.Instance.Init(doReplaceDB);
 				Indexer.Instance.WaitToEnd();
 
-				Console.WriteLine("Total time taken: " + (DateTime.Now - start).TotalMilliseconds + "ms");
+				//Console.WriteLine("Total time taken: " + (DateTime.Now - start).TotalMilliseconds + "ms");
 			}
 
 			Console.CursorVisible = true;

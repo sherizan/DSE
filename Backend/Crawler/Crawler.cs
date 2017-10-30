@@ -17,12 +17,13 @@ namespace Crawler
 		int dirsSearched = 0, filesFound = 0;
 
 		List<Task> tasks = new List<Task>();
+		Dictionary<string, DateTime> lastAccessed = new Dictionary<string, DateTime>();
 
-		public bool Search(List<string> directories)
+		// Check if all the directories exist
+		static public bool DoesAllDirectoriesExist(List<string> directories)
 		{
 			if (directories.Count > 0)
 			{
-				// preliminary check if all the directories exist
 				foreach (string dir in directories)
 				{
 					if (!Directory.Exists(dir))
@@ -32,15 +33,6 @@ namespace Crawler
 						return false;
 					}
 				}
-
-				foreach (string dir in directories)
-				{
-					if (Directory.Exists(dir))
-					{
-						SearchDirectory(dir);
-						Console.WriteLine("Searched " + dirsSearched + " folders and found " + filesFound + " files.");
-					}
-				}
 			}
 			else
 			{
@@ -48,9 +40,33 @@ namespace Crawler
 				return false;
 			}
 
-			Task.WaitAll(tasks.ToArray());
-
 			return true;
+		}
+
+		public void Init(List<string> directories)
+		{
+			Task.Run(() =>
+			{
+				while (true) // loop forever
+				{
+					if (directories.Count > 0)
+					{
+						foreach (string dir in directories)
+						{
+							if (Directory.Exists(dir))
+							{
+								SearchDirectory(dir);
+								//Console.WriteLine("Searched " + dirsSearched + " folders and found " + filesFound + " files.");
+							}
+						}
+					}
+				}
+			});
+		}
+
+		public void WaitEnd()
+		{
+			Task.WaitAll(tasks.ToArray());
 		}
 
 		void SearchDirectory(string path)
@@ -59,7 +75,7 @@ namespace Crawler
 
 			// append '\' to the path if it isn't already there
 			if (path.Last() != '\\') path += '\\';
-			Console.WriteLine("Searching through " + path);
+			//Console.WriteLine("Searching through " + path);
 
 			try
 			{
@@ -84,10 +100,16 @@ namespace Crawler
 			{
 				foreach (string file in files)
 				{
-					// filename is extracted (w/o path)
-					Indexer.Instance.AddFileName(file);
-					tasks.Add(Task.Run(() => Parser.Instance.ParseFile(file)));
-					filesFound++;
+					DateTime fileLastAccessed;
+					if (!lastAccessed.ContainsKey(file) ||
+						(lastAccessed.TryGetValue(file, out fileLastAccessed) && File.GetLastAccessTimeUtc(file) > fileLastAccessed))
+					{
+						lastAccessed.Add(file, DateTime.UtcNow);
+						Indexer.Instance.AddFileName(file);
+						tasks.Add(Task.Run(() => Parser.Instance.ParseFile(file)));
+						filesFound++;
+					}
+
 				}
 			}
 

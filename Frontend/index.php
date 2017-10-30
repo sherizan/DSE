@@ -22,7 +22,7 @@ use App\SQLiteConnection;
 <script src="https://cdnjs.cloudflare.com/ajax/libs/limonte-sweetalert2/6.10.2/sweetalert2.all.min.js"></script>
 
 <nav class="navbar navbar-expand-lg navbar-light bg-light">
-  <a class="navbar-brand" href="/Frontend">SIM DSE</a>
+  <a class="navbar-brand" href="/dse">SIM DSE</a>
   <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
     <span class="navbar-toggler-icon"></span>
   </button>
@@ -211,33 +211,67 @@ use App\SQLiteConnection;
 
                 // Put every word into array and add comas for DB search
                 $pieces = explode(" ", $new_keyword);
-                $newarray = implode("','", $pieces);
 
+                $newarray = implode("','", $pieces);
+                	
                 $sql = "SELECT id, word FROM words WHERE word in ('$newarray')";
 
                 $rows = $pdo->query($sql);
                 $results = $rows->fetchAll();
-
+			                /*echo "<pre>";
+							print_r($results);
+							echo "</pre>";
+							*/
                 if(empty($results)) {
 
                   echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
 
                 } else {
 
-                  foreach ($results as $row) {
+                  $sql = "SELECT word_id, file_id FROM links WHERE ";
 
+                  //foreach ($results as $row) {
+                  for ($i = 0; $i < count($results); $i++)
+                  {
+                  	$row = $results[$i];
                     $words_id = $row['id'];
                     $words_word = $row['word'];
-
+                    $sql = $sql."word_id = '$words_id'";
+                    if ($i < count($results) - 1) $sql = $sql." AND ";
                   }
 
-                  $sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' ";
-
+                 //echo $sql;
                   $rows = $pdo->query($sql);
-                  $results = $rows->fetchAll();
+                  if (count($row) > 0) $results = $rows->fetchAll();
 
-                  echo "<h3>Found results for <b><i>" . $new_keyword . "</i></b>.</h3>";
-                  echo "<hr>";
+                  
+
+                  /*$wrong =0;
+
+                  print_r($results);
+                  echo count($results);
+
+                  if(count($results) > 1)
+                  {
+	                  for($i = 0; $i < (count($results)-1); $i++)
+	                  {
+	                  	if($result[$i] != $result[$i+1])
+	                  	{
+	                  		 $wrong++;
+	                  		 echo "kjoj";
+	                  	}
+	                  }
+              	   }*/
+              	    if(empty($results)> 0) {
+                 		echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
+                	} 
+                	else
+                	{
+                		echo "<h3>Found results for <b><i>" . $new_keyword . "</i></b>.</h3>";
+                  		echo "<hr>";
+                	}
+
+                 
 
                   foreach ($results as $row) {
 
@@ -246,11 +280,15 @@ use App\SQLiteConnection;
                     $sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
 
                     $rows = $pdo->query($sql);
+                    
                     $results = $rows->fetchAll();
+
+
 
                     foreach ($results as $row) :
 
                       $files_id = $row['id'];
+
                       $files_path = $row['file_path'];
 
                     ?>
@@ -276,7 +314,7 @@ use App\SQLiteConnection;
 
                   }
 
-                  echo "<hr><a href='/Frontend' class='btn btn-primary'><i class='fa fa-back'></i> Back to home</a>";
+                  echo "<hr><a href='/dse' class='btn btn-primary'><i class='fa fa-back'></i> Back to home</a>";
 
                 }
 

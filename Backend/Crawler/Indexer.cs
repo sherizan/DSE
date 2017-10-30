@@ -1,10 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
 using System.Threading;
 using System.Data.SQLite;
-using System.Data.SQLite.Linq;
 using System.IO;
 
 namespace Crawler
@@ -32,17 +29,11 @@ namespace Crawler
 
 		public void Init(bool doReplaceDB = false)
 		{
-			bool doesDBExists = File.Exists(dbDirectory + dbFileName);
+			bool doesDBExists = File.Exists(dbDirectory + '\\' + dbFileName);
 
 			if (!doesDBExists)
 			{
 				// create new .sqlite file
-				SQLiteConnection.CreateFile(dbDirectory + dbFileName);
-			}
-			else if (doReplaceDB)
-			{
-				// delete and create new .sqlite file
-				File.Delete(dbDirectory + dbFileName);
 				SQLiteConnection.CreateFile(dbDirectory + dbFileName);
 			}
 
@@ -50,6 +41,15 @@ namespace Crawler
 			db.Open();
 			using (SQLiteCommand command = new SQLiteCommand(db))
 			{
+				if (doReplaceDB)
+				{
+					command.CommandText =
+						"DROP TABLE IF EXISTS files;" +
+						"DROP TABLE IF EXISTS words;" +
+						"DROP TABLE IF EXISTS links;";
+					command.ExecuteNonQuery();
+				}
+
 				try
 				{
 					// check if our table exists

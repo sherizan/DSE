@@ -209,6 +209,8 @@ use App\SQLiteConnection;
 					}
 					
 					$results = $pdo->query($sql)->fetchAll();
+					
+					// merge text results and file path results
 					$sortedResults = array_merge($sortedResults, sortResults($results));
 					
 					echo "<h3>Found <b><i>" . count($sortedResults) . "</i></b> results for <b><i>" . $search . "</i></b>.</h3><hr>";

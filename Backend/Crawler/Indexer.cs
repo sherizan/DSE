@@ -17,6 +17,7 @@ namespace Crawler
 		public static Indexer Instance { get { return _instance; } }
 
 		SQLiteConnection db = null;
+		public static string dbDirectory = "";
 		readonly string dbFileName = "file_indices.sqlite";
 
 		Thread dbThread;
@@ -29,14 +30,23 @@ namespace Crawler
 
 		int totalCommands = 0;
 
-		public void Init()
+		public void Init(bool doReplaceDB = false)
 		{
-			bool doesDBExists = File.Exists(dbFileName);
+			bool doesDBExists = File.Exists(dbDirectory + dbFileName);
 
-			// create new .sqlite file
-			if (!doesDBExists) SQLiteConnection.CreateFile(dbFileName);
+			if (!doesDBExists)
+			{
+				// create new .sqlite file
+				SQLiteConnection.CreateFile(dbDirectory + dbFileName);
+			}
+			else if (doReplaceDB)
+			{
+				// delete and create new .sqlite file
+				File.Delete(dbDirectory + dbFileName);
+				SQLiteConnection.CreateFile(dbDirectory + dbFileName);
+			}
 
-			db = new SQLiteConnection("Data Source=" + dbFileName + "; Version=3; Cache Size=8192; Synchronous=Off; Journal Mode=Memory");
+			db = new SQLiteConnection("Data Source=" + dbDirectory + dbFileName + "; Version=3; Cache Size=8192; Synchronous=Off; Journal Mode=Memory");
 			db.Open();
 			using (SQLiteCommand command = new SQLiteCommand(db))
 			{
@@ -72,7 +82,7 @@ namespace Crawler
 
 				lock (Console.Out)
 				{
-					Console.WriteLine("Commands left = 0"); // x = 15
+					Console.WriteLine("Commands left = 0"); // x = 16
 					oldCursorY = Console.CursorTop - 1;
 				}
 
@@ -82,7 +92,7 @@ namespace Crawler
 					lock (Console.Out)
 					{
 						newCursorY = Console.CursorTop;
-						Console.SetCursorPosition(15, oldCursorY);
+						Console.SetCursorPosition(16, oldCursorY);
 						Console.Out.Write(commandQueue.Count + "\t\t");
 						Console.SetCursorPosition(0, newCursorY);
 					}

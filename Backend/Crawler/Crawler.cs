@@ -14,31 +14,43 @@ namespace Crawler
 		private static Crawler _instance = new Crawler();
 		public static Crawler Instance { get { return _instance; } }
 
-		string rootDirectory = "";
 		int dirsSearched = 0, filesFound = 0;
 
 		List<Task> tasks = new List<Task>();
 
-		public void SetRootDirectory(string directory)
+		public bool Search(List<string> directories)
 		{
-			rootDirectory = directory;
-			if (rootDirectory.Last() != '\\') rootDirectory += '\\';
-		}
-
-		public void Start()
-		{
-			if (Directory.Exists(rootDirectory))
+			if (directories.Count > 0)
 			{
-				SearchDirectory(rootDirectory);
+				// preliminary check if all the directories exist
+				foreach (string dir in directories)
+				{
+					if (!Directory.Exists(dir))
+					{
+						if (dir != "") Console.WriteLine(dir + " does not exist");
+						else Console.WriteLine("Directory does not exist");
+						return false;
+					}
+				}
 
-				Console.WriteLine("Searched " + dirsSearched + " folders and found " + filesFound + " files.");
+				foreach (string dir in directories)
+				{
+					if (Directory.Exists(dir))
+					{
+						SearchDirectory(dir);
+						Console.WriteLine("Searched " + dirsSearched + " folders and found " + filesFound + " files.");
+					}
+				}
 			}
 			else
 			{
 				Console.WriteLine("Directory does not exist!");
+				return false;
 			}
 
 			Task.WaitAll(tasks.ToArray());
+
+			return true;
 		}
 
 		void SearchDirectory(string path)

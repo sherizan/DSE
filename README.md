@@ -2,11 +2,11 @@
 CSCI 311 - Distributed Search Engine
 
 ## How to Install (Windows)
-1. Clone repository
+1. `git clone repo` to /dse
 2. [Download](https://www.apachefriends.org/index.html) and install XAMPP
-3. Make a new folder in `xampp\htdocs\` called `dse\`
-4. Open `xampp\htdocs\index.php`, change `header('Location: '.$uri.'/dashboard/');` to `header('Location: '.$uri.'/dse/');`
-5. Copy over contents of `Frontend\` into `xampp\htdocs\dse\`
+3. Make a new folder in `xampp/htdocs/` called `dse/`
+4. Open `xampp/htdocs/index.php`, change `header('Location: '.$uri.'/dashboard/');` to `header('Location: '.$uri.'/dse/');`
+5. Copy over contents of `Frontend/` into `xampp/htdocs/dse/`
 6. Open XAMPP Control Panel and start Apache
 7. Open your browser and go to `localhost`, it should open the DSE page
 

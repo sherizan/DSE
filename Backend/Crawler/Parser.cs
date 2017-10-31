@@ -50,9 +50,13 @@ namespace Crawler
 
 			for (int i = 0; i < cleaned.Count; ++i)
 			{
-				string s = cleaned[i];
-				Indexer.Instance.AddWordEntry(s);
-				Indexer.Instance.AddWordLink(s, path, i < cleaned.Count - 1 ? cleaned[i + 1] : "");
+				Indexer.Instance.AddWordEntry(cleaned[i]);
+			}
+
+			// word link is in a seperate loop to prevent link.next_id from being null
+			for (int i = 0; i < cleaned.Count; ++i)
+			{
+				Indexer.Instance.AddWordLink(cleaned[i], path, i < cleaned.Count - 1 ? cleaned[i + 1] : "");
 			}
 
 			lock (Console.Out)

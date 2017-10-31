@@ -331,6 +331,7 @@ use App\SQLiteConnection;
               echo "<li>Simply combine them like &ldquo;lazy dog&rdquo; &#92; charlie</li>";
               echo "</ul>";
               echo "</div>";
+              echo "Go to " . $_SERVER['REMOTE_ADDR'] . " to view from your own device.";
             
             }
 

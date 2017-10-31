@@ -18,6 +18,15 @@ CSCI 311 - Distributed Search Engine
 * Hui Lim (Documentation)
 
 ## Frontend
+The frontend consists of two parts: UI and Queries.
+
+##### User Interface
+- The UI is written using HTML and CSS that uses an open source framework called Bootstrap.
+
+##### Queries
+- The search queries are written in SQL and connected to SQLite.
+- The connection from SQLite to PHP uses a dependancy manager, Composer (https://getcomposer.org)
+- The programming language is written in PHP which is server-side.
 
 ## Backend
 The Crawler is written in C# and contains four main parts.

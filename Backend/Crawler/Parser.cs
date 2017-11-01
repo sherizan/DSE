@@ -18,7 +18,7 @@ namespace Crawler
 		Regex rgx = new Regex("[^a-zA-Z0-9 -]");
 
 		//static string[] ValidFileTypes = { ".txt", ".html", ".c", ".cpp", ".cs", ".js", ".java" };
-		static char[] whitespaceCharacters = { ' ', '\f', '\n', '\r', '\t', '\v'};
+		static char[] whitespaceCharacters = { ' ', '\f', '\n', '\r', '\t', '\v' };
 
 		public void ParseFile(string path)
 		{
@@ -56,7 +56,7 @@ namespace Crawler
 			// word link is in a seperate loop to prevent link.next_id from being null
 			for (int i = 0; i < cleaned.Count; ++i)
 			{
-				Indexer.Instance.AddWordLink(cleaned[i], path, i < cleaned.Count - 1 ? cleaned[i + 1] : "");
+				Indexer.Instance.AddWordLink(cleaned[i], path, i > 0 ? cleaned[i - 1] : "", i < cleaned.Count - 1 ? cleaned[i + 1] : "");
 			}
 
 			lock (Console.Out)

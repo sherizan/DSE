@@ -95,268 +95,108 @@ use App\SQLiteConnection;
 		<div style="padding: 30px;">
 
 			<?php
+			function strpos_all($haystack, $needle)
+			{
+				$offset = 0;
+				$allpos = array();
+				while (($pos = strpos($haystack, $needle, $offset)) !== FALSE) {
+					$offset   = $pos + 1;
+					$allpos[] = $pos;
+				}
+				return $allpos;
+			}
+			
+			function displayResults($pdo, $result)
+			{
+				if (is_array($result) || is_object($result))
+				{
+					foreach ($result as $r)
+					{
+						$links_file_id = $r['file_id'];
+						$sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
+						$rows = $pdo->query($sql);
+						$results2 = $rows->fetchAll();
+
+						foreach ($results2 as $row2) :
+							$files_id = $row2['id'];
+							$files_path = $row2['file_path'];
+
+							?>
+							<div class="card my-4">
+							<div class="card-body">
+								<?php if (file_exists($files_path)) : ?>
+								<p><span class="badge badge-light"><a href="<?php echo $files_path; ?>" target="_blank"><?php echo $files_path; ?></a></span></p>
+								<?php
+									echo "<pre>";
+									echo file_get_contents($files_path);
+									echo "</pre>";
+								?>
+								<?php endif; ?>
+							</div>
+							</div>
+							<?php
+						endforeach;
+					}
+				}
+			}
 
 			if ($db_fail != 0) 
 			{
 				if (isset($_GET['keyword']))
 				{
-					// Lowercase search string
-					$new_keyword = strtolower($_GET['keyword']);
-
-					// If there is exclude operator
-					if (strpos($new_keyword, ' \ '))
+					// keep array of words, in sequence
+					$search = preg_replace("/[^A-Za-z0-9()|\"\\\ ]/", '', strtolower($_GET['keyword']));
+					$pieces = explode(' ', $search);
+					
+					$sql = "SELECT file_id FROM (";
+					
+					for ($i = 0; $i < count($pieces); $i++)
 					{
-						$include = trim(strstr($new_keyword, ' \ ', true));
-						$exclude = trim(strrchr($new_keyword, ' \ '));
-
-						$sql = "SELECT id, word FROM words WHERE word = '$include'";
-
-						$rows = $pdo->query($sql);
-						$results = $rows->fetchAll();
-
-						foreach ($results as $row)
+						$s = $pieces[$i];
+						
+						if ($s === "\\")
 						{
-							$words_id = $row['id'];
-							$words_word = $row['word']; 
+							if ($i > 0 && $pieces[$i - 1] !== "\\")
+								$sql = $sql."EXCEPT "; // NOT operand
 						}
-
-						// Find word id for excluded word
-						$sql = "SELECT id FROM words WHERE word = '$exclude'";
-
-						$rows = $pdo->query($sql);
-						$results = $rows->fetchAll();
-
-						foreach ($results as $row)
+						else if ($s === "|")
 						{
-							$exc_words_id = $row['id'];
-						}
-
-						// Find file id for excluded word
-						$sql = "SELECT file_id FROM links WHERE word_id = '$exc_words_id' ";
-
-						$rows = $pdo->query($sql);
-						$results = $rows->fetchAll();
-
-						foreach ($results as $row)
-						{
-							$exc_links_file_id = $row['file_id'];
-						}
-
-						$sql = "SELECT word_id, file_id FROM links WHERE word_id = '$words_id' AND NOT file_id = '$exc_links_file_id' ";
-
-						$rows = $pdo->query($sql);
-						$results = $rows->fetchAll();
-
-						echo "<h3>Found results for <b><i>" . $include . "</i></b> and <span style='color:red;'>excluding</span> " . $exclude . ".</h3>";
-						echo "<hr>";
-
-						foreach ($results as $row)
-						{
-							$links_file_id = $row['file_id'];
-							$sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
-							$rows = $pdo->query($sql);
-							$results = $rows->fetchAll();
-
-							foreach ($results as $row) :
-								$files_id = $row['id'];
-								$files_path = $row['file_path'];
-
-								?>
-								<div class="card my-4">
-								<div class="card-body">
-									<?php if (file_exists($files_path)) : ?>
-									<p><span class="badge badge-light"><a href="<?php echo $files_path; ?>" target="_blank"><?php echo $files_path; ?></a></span></p>\
-									<?php
-										echo "<pre>";
-										echo file_get_contents($files_path);
-										echo "</pre>";
-									?>
-									<?php endif; ?>
-								</div>
-								</div>
-								<?php endforeach;
-						}
-					}
-					else if (strpos($new_keyword, ' | '))
-					{
-						$clean = str_replace(" | ", " ", $new_keyword);
-						// Put every word into array and add comas for DB search
-						$pieces = explode(" ", $clean);
-						$newarray = implode("','", $pieces);
-
-						$sql = "SELECT id, word FROM words WHERE word IN ('$newarray')";
-
-						$rows = $pdo->query($sql);
-						$results = $rows->fetchAll();
-									/*echo "<pre>";
-									print_r($results);
-									echo "</pre>";
-									*/
-
-						if(empty($results))
-						{
-							echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
+							if ($i > 0 && $pieces[$i - 1] !== "|")
+								$sql = $sql."UNION "; // OR operand
 						}
 						else
 						{
-							// OR operation
-							$sql = "SELECT * FROM links WHERE (word_id IN (";
-
-							for ($i = 0; $i < count($results); $i++)
-							{
-								$row = $results[$i];
-								$words_id = $row['id'];
-								$words_word = $row['word'];
-								$sql = $sql."'$words_id'";
-								if ($i < count($results) - 1) $sql = $sql.", ";
-								else $sql = $sql."))";
-							}
-
-							echo $sql."<br><br>";
-
-							$rows = $pdo->query($sql);
-							if (count($row) > 0) $results = $rows->fetchAll();
-
-							print_r($results);
-							echo "<br><br>";
-							echo count($results)."<br><br>";
-
-							if(empty($results)> 0)
-							{
-								echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
-							}
-							else
-							{
-								echo "<h3>Found results for <b><i>" . str_replace("|", "OR", $new_keyword) . "</i></b>.</h3>";
-								echo "<hr>";
-							}
-
-							foreach ($results as $row)
-							{
-								$links_file_id = $row['file_id'];
-								$sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
-								$rows = $pdo->query($sql);
-								$results = $rows->fetchAll();
-
-								foreach ($results as $row) :
-									$files_id = $row['id'];
-									$files_path = $row['file_path'];
-									?>
-									<div class="card my-4">
-										<div class="card-body">
-										<?php if (file_exists($files_path)) : ?>
-											<p><span class="badge badge-light"><a href="<?php echo $files_path; ?>" target="_blank"><?php echo $files_path; ?></a></span></p>
-											<?php
-											echo "<pre>";
-											echo file_get_contents($files_path);
-											echo "</pre>";
-											?>
-										<?php endif; ?>
-										</div>
-									</div>
-									<?php endforeach;
-							}
+							if ($i > 0 && $pieces[$i - 1] !== "|" && $pieces[$i - 1] !== "\\")
+								$sql = $sql."INTERSECT "; // AND operand
 							
-							echo "<hr><a href='/dse' class='btn btn-primary'><i class='fa fa-back'></i> Back to home</a>";
+							$sql = $sql."SELECT file_id FROM links WHERE word_id = (SELECT id FROM words WHERE word = '$s') ";
 						}
 					}
-					else
+					
+					$sql = $sql.')';
+					
+					$results = $pdo->query($sql)->fetchAll();
+					
+					// rank results according to occurence
+					$sortedResults = [];
+					for ($i = 0; $i < count($results); $i++)
 					{
-						// Put every word into array and add comas for DB search
-						$pieces = explode(" ", $new_keyword);
-						$newarray = implode("','", $pieces);
-
-						$sql = "SELECT id, word FROM words WHERE word IN ('$newarray')";
-
-						$rows = $pdo->query($sql);
-						$results = $rows->fetchAll();
-									/*echo "<pre>";
-									print_r($results);
-									echo "</pre>";
-									*/
-
-						if(empty($results))
+						$index = array_search($results[$i]['file_id'], array_column($sortedResults, 'file_id'));
+						if ($index === false)
 						{
-							echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
+							$sortedResults[] = $results[$i];
+							$sortedResults[count($sortedResults) - 1]['count'] = 1;
 						}
 						else
-						{
-							// AND operation
-							$sql = "SELECT file_id FROM ( ";
-
-							for ($i = 0; $i < count($results); $i++)
-							{
-								$row = $results[$i];
-								$words_id = $row['id'];
-								$words_word = $row['word'];
-								$sql = $sql."SELECT file_id FROM links WHERE word_id = '$words_id'";
-								if ($i < count($results) - 1) $sql = $sql." INTERSECT ";
-								else $sql = $sql.")";
-							}
-							
-							
-/* 							// OR operation
-							$sql = "SELECT * FROM links WHERE (word_id IN (";
-
-							for ($i = 0; $i < count($results); $i++)
-							{
-								$row = $results[$i];
-								$words_id = $row['id'];
-								$words_word = $row['word'];
-								$sql = $sql."'$words_id'";
-								if ($i < count($results) - 1) $sql = $sql.", ";
-								else $sql = $sql."))";
-							}						
- */
-
-							echo $sql."<br><br>";
-
-							$rows = $pdo->query($sql);
-							if (count($row) > 0) $results = $rows->fetchAll();
-
-							print_r($results);
-							echo "<br><br>";
-							echo count($results)."<br><br>";
-
-							if(empty($results)> 0)
-							{
-								echo 'Oops! We cannot find any files with the word <b>' . $new_keyword . '</b>';
-							}
-							else
-							{
-								echo "<h3>Found results for <b><i>" . $new_keyword . "</i></b>.</h3>";
-								echo "<hr>";
-							}
-
-							foreach ($results as $row)
-							{
-								$links_file_id = $row['file_id'];
-								$sql = "SELECT id, file_path FROM files WHERE id = '$links_file_id' ";
-								$rows = $pdo->query($sql);
-								$results = $rows->fetchAll();
-
-								foreach ($results as $row) :
-									$files_id = $row['id'];
-									$files_path = $row['file_path'];
-									?>
-									<div class="card my-4">
-										<div class="card-body">
-										<?php if (file_exists($files_path)) : ?>
-											<p><span class="badge badge-light"><a href="<?php echo $files_path; ?>" target="_blank"><?php echo $files_path; ?></a></span></p>
-											<?php
-											echo "<pre>";
-											echo file_get_contents($files_path);
-											echo "</pre>";
-											?>
-										<?php endif; ?>
-										</div>
-									</div>
-									<?php endforeach;
-							}
-							
-							echo "<hr><a href='/dse' class='btn btn-primary'><i class='fa fa-back'></i> Back to home</a>";
-						}
+							$sortedResults[$index]['count']++; // count results
 					}
+					
+					// sort according to count
+					usort($sortedResults, function($a, $b) { return $a['count'] <= $b['count']; });
+					
+					echo "<h3>Found <b><i>" . count($sortedResults) . "</i></b> results for <b><i>" . $search . "</i></b>.</h3><hr>";
+					displayResults($pdo, $sortedResults);
+					echo "<hr><a href='/dse' class='btn btn-primary'><i class='fa fa-back'></i> Back to home</a>";
 				}
 				else
 				{

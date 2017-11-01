@@ -65,7 +65,7 @@ namespace Crawler
 					command.CommandText =
 						"CREATE TABLE files (id TEXT UNIQUE, file_path TEXT UNIQUE PRIMARY KEY);\n" +
 						"CREATE TABLE words (id TEXT UNIQUE, word TEXT UNIQUE PRIMARY KEY);\n" +
-						"CREATE TABLE links (word_id TEXT, file_id TEXT, next_id TEXT);";
+						"CREATE TABLE links (word_id TEXT, file_id TEXT, prev_id TEXT, next_id TEXT);";
 					command.ExecuteNonQuery();
 				}
 			}
@@ -167,29 +167,18 @@ namespace Crawler
 			totalCommands++;
 		}
 
-		public void AddWordLink(string word, string fullPath, string nextWord)
+		public void AddWordLink(string word, string fullPath, string prevWord, string nextWord)
 		{
 			if (word == null || fullPath == null ||
 				word == "" || fullPath == "") return;
 
-			if (nextWord != "")
-			{
-				QueueCommand("INSERT INTO links (word_id, file_id, next_id) SELECT " +
+			QueueCommand("INSERT INTO links (word_id, file_id, prev_id, next_id) SELECT " +
 				"(SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
 				"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.file_path)," +
-				"(SELECT words.id FROM words WHERE \"" + nextWord + "\" = words.word) " +
+				(prevWord != "" ? "(SELECT words.id FROM words WHERE \"" + prevWord + "\" = words.word), " : "\"\", ") +
+				(nextWord != "" ? "(SELECT words.id FROM words WHERE \"" + nextWord + "\" = words.word) " : "\"\" ") +
 				"WHERE EXISTS (" +
 				"SELECT words.id FROM words WHERE \"" + word + "\" = words.word)");
-			}
-			else
-			{
-				QueueCommand("INSERT INTO links (word_id, file_id, next_id) SELECT " +
-				"(SELECT words.id FROM words WHERE \"" + word + "\" = words.word), " +
-				"(SELECT files.id FROM files WHERE \"" + fullPath + "\" = files.file_path), " +
-				"\"\" " +
-				"WHERE EXISTS (" +
-				"SELECT words.id FROM words WHERE \"" + word + "\" = words.word)");
-			}
 
 			totalCommands++;
 		}

@@ -106,6 +106,27 @@ use App\SQLiteConnection;
 				return $allpos;
 			}
 			
+			function sortResults($result)
+			{					
+				$sortedResults = [];
+				for ($i = 0; $i < count($result); $i++)
+				{
+					$index = array_search($result[$i]['file_id'], array_column($sortedResults, 'file_id'));
+					if ($index === false)
+					{
+						$sortedResults[] = $result[$i];
+						$sortedResults[count($sortedResults) - 1]['count'] = 1;
+					}
+					else
+						$sortedResults[$index]['count']++; // count results
+				}
+				
+				// sort according to count
+				usort($sortedResults, function($a, $b) { return $a['count'] <= $b['count']; });
+				
+				return $sortedResults;
+			}
+			
 			function displayResults($pdo, $result)
 			{
 				if (is_array($result) || is_object($result))
@@ -145,7 +166,7 @@ use App\SQLiteConnection;
 				if (isset($_GET['keyword']))
 				{
 					// keep array of words, in sequence
-					$search = preg_replace("/[^A-Za-z0-9()|\"\\\ ]/", '', strtolower($_GET['keyword']));
+					$search = preg_replace("/[^A-Za-z0-9|.\\\ ]/", '', strtolower($_GET['keyword']));
 					$pieces = explode(' ', $search);
 					
 					$sql = "SELECT file_id FROM (";
@@ -176,23 +197,19 @@ use App\SQLiteConnection;
 					$sql = $sql.')';
 					
 					$results = $pdo->query($sql)->fetchAll();
+					$sortedResults = sortResults($results);
 					
-					// rank results according to occurence
-					$sortedResults = [];
-					for ($i = 0; $i < count($results); $i++)
+					// find file names
+					$sql = "SELECT id AS file_id FROM files WHERE ";
+					for ($i = 0; $i < count($pieces); $i++)
 					{
-						$index = array_search($results[$i]['file_id'], array_column($sortedResults, 'file_id'));
-						if ($index === false)
-						{
-							$sortedResults[] = $results[$i];
-							$sortedResults[count($sortedResults) - 1]['count'] = 1;
-						}
-						else
-							$sortedResults[$index]['count']++; // count results
+						$s = $pieces[$i];
+						$sql = $sql."file_path LIKE '%$s%'";
+						if ($i < count($pieces) - 1) $sql = $sql." OR ";
 					}
 					
-					// sort according to count
-					usort($sortedResults, function($a, $b) { return $a['count'] <= $b['count']; });
+					$results = $pdo->query($sql)->fetchAll();
+					$sortedResults = array_merge($sortedResults, sortResults($results));
 					
 					echo "<h3>Found <b><i>" . count($sortedResults) . "</i></b> results for <b><i>" . $search . "</i></b>.</h3><hr>";
 					displayResults($pdo, $sortedResults);

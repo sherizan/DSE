@@ -201,13 +201,14 @@ use App\SQLiteConnection;
 				else
 				{
 					echo "<div class='alert alert-warning'>";
-					echo "<h3>Search Features</h3>";
-					echo "<ul class=''>";
-					echo "<li>Single or multiple word search</li>";
-					echo "<li>Search exact words with &ldquo;lazy dog&rdquo;</li>";
-					echo "<li>Exclude a word with &#92; charlie</li>";
-					echo "<li>Simply combine them like &ldquo;lazy dog&rdquo; &#92; charlie</li>";
-					echo "</ul>";
+					echo "<h4>Search Features</h4>";
+					echo "<ol class=''>";
+					echo "<li>Single or multiple word search (e.g brown dog)</li>";
+					echo "<li>Search different words with &#124; (e.g bravo &#124; charlie)</li>";
+					echo "<li>Exclude a word with &#92; (e.g &#92; charlie)</li>";
+					echo "<li>Simply combine them (e.g dog &#124; charlie &#92; alpha)</li>";
+					echo "<li>Search for filenames (e.g a.txt)</li>";
+					echo "</ol>";
 					echo "</div>";
 				}
 			}

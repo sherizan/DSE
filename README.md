@@ -1,7 +1,7 @@
 # DSE
 CSCI 311 - Distributed Search Engine
 
-## How to Install (Windows)
+## How to install (Windows)
 1. `git clone repo` to /dse
 2. [Download](https://www.apachefriends.org/index.html) and install XAMPP
 3. Make a new folder in `xampp/htdocs/` called `dse/`
@@ -9,6 +9,13 @@ CSCI 311 - Distributed Search Engine
 5. Copy over contents of `Frontend/` into `xampp/htdocs/dse/`
 6. Open XAMPP Control Panel and start Apache
 7. Open your browser and go to `localhost`, it should open the DSE page
+
+## How to build (Windows)
+1. `git clone repo` to /dse
+2. Open `Backend/CSCI 311 DSE.sln` in Visual Studios (2015 and above).
+3. Build in Release
+4. Copy over `Deliverables/config.ini` into `Backend/Crawler/bin/Release/`
+5. Edit `Backend/Crawler/bin/Release/config.ini` with desired search path and desired db save location (default save location is same directory as executable)
 
 ## Members:
 * Sherizan (Project Lead/Front End)

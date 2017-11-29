@@ -1,5 +1,5 @@
 # DSE
-CSCI 311 - Distributed Search Engine
+Distributed Search Engine
 
 ## How to install (Windows)
 1. `git clone repo` to /dse
